@@ -69,22 +69,59 @@ fetch('https://randomuser.me/api/')
   })
   .catch(function(){
     // console.log('algo esta fallando')
-  });
+  }); //importante! (;)
 
 //*-------------------------Codigo Asincronas*/
 
+// (async function load () {
+//   const response = await fetch('https://randomuser.me/api/');
+//   const data = await response.json();
+//   console.log(data);
+// })()
+/*--------------------------------------------*/
+// Con PROMISE *********************
+//  (async function load () {
+//
+//   async function getData(url){
+//     const response = await fetch(url);
+//     const data = await response.json();
+//     return data;
+//   }
+//   const actionList = await getData('https://randomuser.me/api/?results=100');
+//   console.log(actionList);
+// })()
+
+// Con ASYNC AWAIT **************************
+//  (async function load () {
+//   async function getData(url){
+//     const response = await fetch(url);
+//     const data = await response.json();
+//     return data;
+//   }
+//    let actionList;
+//    getData('https://randomuser.me/api/?results=100')
+//      .then(function(data){
+//        console.log('actionList',data);
+//        actionList = data;
+//     })
+//   console.log(actionList);
+// })()
+/*------------------------------------------------*/
+
 (async function load() {
   const BASE_API = 'https://yts.am/api/v2/';
+  const API_USERS = 'https://randomuser.me/api/';
+
   // await
   async function getData(url){
     const response = await fetch(url);
     const data = await response.json();
-    if(data.data.movie_count > 0){
-      //aqui se acaba
-      return data;
-    }
-    //si no hay pelis continua
-    throw new Error('No se encontro ningun resultado');
+    return data;
+    // if(data.data.movie_count > 0){
+    //   //aqui se acaba
+    // }
+    // //si no hay pelis continua
+    // throw new Error('No se encontro ningun resultado');
   }
 
   const $form = document.querySelector('#form');
@@ -140,13 +177,22 @@ fetch('https://randomuser.me/api/')
         alert(e.message);
         $loader.remove();
         $home.classList.remove('search-active')
-      }
+    }
   })
 
-
-  // console.log(actionList, dramaList, animationList)
-  // debugger
-
+  function userTemplate(user) {
+    return(
+      `
+      <li class="playlistFriends-item">
+        <a href="#">
+          <img src="${user.picture.medium}" alt="${user.login.username}" />
+          <span>
+          ${user.name.first} ${user.name.last}
+          </span>
+        </a>
+      </li>`
+    )
+  }
   function videoItemTemplate(movie, category){
     return(
       `<div class="primaryPlaylistItem" data-id="${movie.id}" data-category=${category}>
@@ -202,19 +248,40 @@ fetch('https://randomuser.me/api/')
     return data;
   }
 
+  const $userContainer = document.querySelector('#users ul');
+  function renderUserList(list){
+    list.forEach((user)=>{
+      const HTMLString = userTemplate(user);
+      const userElement = createTemplate(HTMLString);
+      $userContainer.append(userElement);
+
+      const avatar = userElement.querySelector('img')
+      avatar.addEventListener('load', (event)=>{
+        avatar.classList.add('fadeIn')
+      })
+      // addEventClick(userElement);
+    })
+  }
+  // const userList = await getData('https://randomuser.me/api/?results=7');
+  const { results : usuarios } = await getData(`${API_USERS}?results=7`);
+  renderUserList(usuarios);
+
+
+
+
   // const { data: { movies: actionList }} = await getData(`${BASE_API}list_movies.json?genre=action`);
-  const actionList = await cacheExist('action');
   // window.localStorage.setItem('actionList', JSON.stringify(actionList));
+  const actionList = await cacheExist('action');
   const $actionContainer = document.querySelector('#action');
   renderMovieList(actionList, $actionContainer, 'action');
 
-  const dramaList = await cacheExist('drama');
   // window.localStorage.setItem('dramaList', JSON.stringify(dramaList));
+  const dramaList = await cacheExist('drama');
   const $dramaContainer = document.querySelector('#drama');
   renderMovieList(dramaList, $dramaContainer, 'drama');
 
-  const animationList = await cacheExist('animation');
   // window.localStorage.setItem('animationList', JSON.stringify(animationList));
+  const animationList = await cacheExist('animation');
   const $animationContainer = document.querySelector('#animation');
   renderMovieList(animationList, $animationContainer, 'animation');
 
@@ -246,7 +313,6 @@ fetch('https://randomuser.me/api/')
 
   function findById(list, id){
     return list.find(movie => movie.id === parseInt(id, 10));
-    debugger
   }
   function showModal($element){
     $overlay.classList.add('active');
